@@ -9,8 +9,8 @@ import (
 
 type GitHubWorkflow struct {
 	Jobs map[string]struct {
-		RunsOn string              `yaml:"runs-on"`
-		Steps  []map[string]string `yaml:"steps"`
+		RunsOn string                   `yaml:"runs-on"`
+		Steps  []map[string]interface{} `yaml:"steps"`
 	} `yaml:"jobs"`
 }
 
@@ -30,7 +30,11 @@ func convertGitHubToGitLab(githubWorkflow GitHubWorkflow) GitLabCI {
 		steps := []string{}
 		for _, step := range job.Steps {
 			if script, exists := step["run"]; exists {
-				steps = append(steps, script)
+				if scriptStr, ok := script.(string); ok { // Type assertion to string
+					steps = append(steps, scriptStr)
+				} else {
+					fmt.Printf("Warning: 'run' step in job '%s' is not a string, skipping\n", jobName)
+				}
 			}
 		}
 		gitlabCI.Jobs[jobName] = map[string]interface{}{
