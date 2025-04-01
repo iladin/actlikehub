@@ -19,14 +19,15 @@ type GitLabCI struct {
 	Jobs   map[string]map[string]interface{} `yaml:"jobs"`
 }
 
-func convertGitHubToGitLab(githubWorkflow GitHubWorkflow) GitLabCI {
-	gitlabCI := GitLabCI{
-		Stages: []string{},
-		Jobs:   make(map[string]map[string]interface{}),
+func convertGitHubToGitLab(githubWorkflow GitHubWorkflow) map[string]interface{} {
+	gitlabCI := map[string]interface{}{
+		"stages": []string{},
 	}
 
 	for jobName, job := range githubWorkflow.Jobs {
-		gitlabCI.Stages = append(gitlabCI.Stages, jobName)
+		// Add the job name to the stages list
+		gitlabCI["stages"] = append(gitlabCI["stages"].([]string), jobName)
+
 		steps := []string{}
 		for _, step := range job.Steps {
 			if script, exists := step["run"]; exists {
@@ -37,7 +38,9 @@ func convertGitHubToGitLab(githubWorkflow GitHubWorkflow) GitLabCI {
 				}
 			}
 		}
-		gitlabCI.Jobs[jobName] = map[string]interface{}{
+
+		// Add the job directly to the root level
+		gitlabCI[jobName] = map[string]interface{}{
 			"stage":  jobName,
 			"script": steps,
 		}
